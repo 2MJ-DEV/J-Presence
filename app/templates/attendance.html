@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="header">
+	<p class="eyebrow">Archives</p>
+	<h1>Historique des présences</h1>
+</section>
+<section class="journal">
+	<table>
+		<thead><tr><th>N°</th><th>Identité</th><th>Promotion</th><th>Labo</th><th>Machine</th><th>Date</th><th>Entrée</th><th>Sortie</th><th>Statut</th></tr></thead>
+		<tbody>
+			{% for row in rows %}
+			<tr>
+				<td>{{ loop.index }}</td><td>{{ row.full_name }}</td><td>{{ row.promotion }}</td>
+				<td>{{ row.laboratory }}</td><td>{{ row.machine }}</td><td>{{ row.date.strftime('%d/%m/%Y') }}</td>
+				<td>{{ row.check_in.strftime('%H:%M') if row.check_in else '-' }}</td>
+				<td>{{ row.check_out.strftime('%H:%M') if row.check_out else '-' }}</td><td>{{ row.status }}</td>
+			</tr>
+			{% else %}
+			<tr><td colspan="9">Aucune présence enregistrée.</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</section>
+{% endblock %}

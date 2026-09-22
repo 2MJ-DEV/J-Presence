@@ -1,0 +1,23 @@
+name: lab-attendance-ai
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - ipykernel
+  - notebook
+  - jupyterlab
+  - numpy
+  - matplotlib
+  - pip:
+      - fastapi
+      - uvicorn[standard]
+      - sqlalchemy
+      - pytest
+      - pydantic
+      - pydantic-settings
+      - python-dotenv
+      - jinja2
+      - opencv-python
+      - insightface
+      - onnxruntime

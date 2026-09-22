@@ -1,0 +1,75 @@
+:root {
+  color-scheme: light;
+  font-family: Georgia, "Times New Roman", serif;
+  background: #f7f8fa;
+  color: #1f2933;
+}
+
+body {
+  margin: 0;
+}
+
+.nav {
+  display: flex;
+  gap: 20px;
+  padding: 16px max(16px, calc((100% - 1120px) / 2));
+  background: #243b3b;
+}
+
+.nav a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.page {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 32px 0;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #41635f;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.journal {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #d9e0e7;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+th,
+td {
+  padding: 14px 12px;
+  border-bottom: 1px solid #e6ebf0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  background: #edf3f1;
+  color: #243b3b;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="header">
+	<p class="eyebrow">Répertoire</p>
+	<h1>Etudiants enregistrés</h1>
+</section>
+<section class="journal">
+	<table>
+		<thead><tr><th>N°</th><th>Identité</th><th>Promotion</th><th>Labo</th><th>Machine</th><th>Téléphone</th></tr></thead>
+		<tbody>
+			{% for student in students %}
+			<tr>
+				<td>{{ student.id }}</td><td>{{ student.full_name }}</td><td>{{ student.promotion }}</td>
+				<td>{{ student.laboratory }}</td><td>{{ student.machine }}</td><td>{{ student.phone or '-' }}</td>
+			</tr>
+			{% else %}
+			<tr><td colspan="6">Aucun étudiant enregistré.</td></tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</section>
+{% endblock %}

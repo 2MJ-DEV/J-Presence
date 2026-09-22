@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+  </head>
+  <body>
+    <nav class="nav">
+      <a href="/">Journal</a>
+      <a href="/students">Etudiants</a>
+      <a href="/attendance">Historique</a>
+      <a href="/docs">API</a>
+    </nav>
+    <main class="page">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>
