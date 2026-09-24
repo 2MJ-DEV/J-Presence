@@ -1,0 +1,2 @@
+lab-attendance-ai
+C:\Users\shilo\AppData\Roaming\jupyter\kernels\lab-attendance-ai
