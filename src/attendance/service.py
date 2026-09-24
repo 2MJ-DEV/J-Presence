@@ -1,7 +1,7 @@
 """Business rules for recording recognized student passages."""
 
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from typing import Literal
 
 import numpy as np
@@ -52,15 +52,13 @@ class AttendanceService:
 		if get_student(self.db, student_id) is None:
 			raise ValueError(f"Unknown student id: {student_id}")
 
-		if not self.cooldown.should_accept(student_id, event_time):
-			attendance = get_attendance_for_day(self.db, student_id, event_time.date())
-			return AttendanceEvent("ignored_cooldown", student_id, attendance, event_time)
-
 		attendance_date: date = event_time.date()
 		attendance = get_attendance_for_day(self.db, student_id, attendance_date)
 		event_clock: time = event_time.time().replace(microsecond=0)
 
 		if attendance is None:
+			if not self.cooldown.should_accept(student_id, event_time):
+				return AttendanceEvent("ignored_cooldown", student_id, None, event_time)
 			attendance = Attendance(
 				student_id=student_id,
 				date=attendance_date,
@@ -70,6 +68,11 @@ class AttendanceService:
 			self.db.add(attendance)
 			action: AttendanceAction = "check_in"
 		elif attendance.check_out is None:
+			if attendance.check_in is None:
+				return AttendanceEvent("already_present", student_id, attendance, event_time)
+			check_in_dt = datetime.combine(event_time.date(), attendance.check_in)
+			if event_time - check_in_dt < timedelta(hours=1):
+				return AttendanceEvent("already_present", student_id, attendance, event_time)
 			attendance.check_out = event_clock
 			attendance.status = "completed"
 			action = "check_out"
@@ -93,10 +96,11 @@ class AttendanceService:
 		self._require_student(student_id)
 		attendance = get_attendance_for_day(self.db, student_id, event_time.date())
 		if attendance is not None:
-			action: AttendanceAction = (
-				"already_closed" if attendance.check_out is not None else "already_present"
-			)
-			return AttendanceEvent(action, student_id, attendance, event_time)
+			if attendance.check_out is not None:
+				return AttendanceEvent("already_closed", student_id, attendance, event_time)
+			return AttendanceEvent("ignored_cooldown", student_id, attendance, event_time)
+		if not self.cooldown.should_accept(student_id, event_time):
+			return AttendanceEvent("ignored_cooldown", student_id, None, event_time)
 		attendance = Attendance(
 			student_id=student_id,
 			date=event_time.date(),

@@ -1,7 +1,8 @@
 """Student registration from validated face captures."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from collections.abc import Iterable, Protocol
+from typing import Protocol
 
 import numpy as np
 from sqlalchemy.orm import Session
