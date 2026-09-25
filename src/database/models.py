@@ -5,6 +5,7 @@ from datetime import date, datetime, time
 from sqlalchemy import (
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     JSON,
@@ -70,3 +71,16 @@ class Attendance(Base):
     )
 
     student: Mapped[Student] = relationship(back_populates="attendance_records")
+
+
+class UnknownDetection(Base):
+    """A face detected by the camera without a matching registered student."""
+
+    __tablename__ = "unknown_detections"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    detected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
+    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    bbox: Mapped[list[int]] = mapped_column(JSON, nullable=False)

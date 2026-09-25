@@ -1,17 +1,31 @@
 """Attendance API endpoints."""
 
+import base64
+import binascii
 from datetime import date, datetime
+from functools import lru_cache
 
+import cv2
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.schemas import AttendanceAction, AttendanceRead
+from app.schemas import AttendanceAction, AttendanceRead, DetectionFrame
 from src.attendance.service import AttendanceService
 from src.config.settings import get_settings
 from src.database.connection import get_db
-from src.database.repository import list_attendance
+from src.database.repository import list_attendance, list_students
+from src.face.detector import InsightFaceDetector
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
+
+
+@lru_cache(maxsize=1)
+def get_detector() -> InsightFaceDetector:
+    """Load InsightFace once instead of reloading the model for every frame."""
+
+    settings = get_settings()
+    return InsightFaceDetector(settings.model_name)
 
 
 def serialize_attendance(record: object) -> dict[str, object]:
@@ -47,6 +61,47 @@ def get_today_attendance(db: Session = Depends(get_db)) -> list[dict[str, object
     """Return today's journal."""
 
     return get_attendance(date.today(), db)
+
+
+@router.post("/detect")
+def detect_frame(
+    payload: DetectionFrame, db: Session = Depends(get_db)
+) -> dict[str, object]:
+    """Detect and recognize faces from one browser camera frame."""
+
+    encoded_image = payload.image.split(",", 1)[-1]
+    try:
+        image_bytes = base64.b64decode(encoded_image, validate=True)
+    except (ValueError, binascii.Error) as error:
+        raise HTTPException(status_code=400, detail="Invalid camera image.") from error
+
+    frame = cv2.imdecode(np.frombuffer(image_bytes, dtype=np.uint8), cv2.IMREAD_COLOR)
+    if frame is None:
+        raise HTTPException(status_code=400, detail="Unsupported camera image.")
+
+    settings = get_settings()
+    service = AttendanceService(db, settings.cooldown_seconds)
+    students = list_students(db)
+    students_by_id = {student.id: student for student in students}
+    results = service.process_frame(
+        frame,
+        get_detector(),
+        students,
+        settings.face_recognition_threshold,
+    )
+    detections = []
+    for result in results:
+        student = students_by_id.get(result.recognition.student_id)
+        detections.append(
+            {
+                "bbox": result.bbox,
+                "score": round(result.recognition.score, 3),
+                "student_id": result.recognition.student_id,
+                "full_name": student.full_name if student else None,
+                "action": result.attendance.action if result.attendance else None,
+            }
+        )
+    return {"detections": detections}
 
 
 @router.post("/check-in", response_model=AttendanceRead)

@@ -21,6 +21,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
 
     rows = [serialize_attendance(row) for row in list_attendance(db, date.today())]
     return templates.TemplateResponse(
+        request,
         "dashboard.html",
         {"request": request, "title": "Journal du laboratoire", "rows": rows},
     )
@@ -31,6 +32,7 @@ def students_page(request: Request, db: Session = Depends(get_db)) -> HTMLRespon
     """Render registered students."""
 
     return templates.TemplateResponse(
+        request,
         "students.html",
         {"request": request, "title": "Etudiants", "students": list_students(db)},
     )
@@ -42,6 +44,7 @@ def attendance_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
 
     rows = [serialize_attendance(row) for row in list_attendance(db)]
     return templates.TemplateResponse(
+        request,
         "attendance.html",
         {"request": request, "title": "Presences", "rows": rows},
     )

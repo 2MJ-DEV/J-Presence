@@ -5,6 +5,38 @@
 	<p class="eyebrow">Répertoire</p>
 	<h1>Etudiants enregistrés</h1>
 </section>
+
+<section class="registration-panel" aria-labelledby="registration-title">
+	<div class="camera-heading">
+		<div>
+			<p class="eyebrow">Nouvel étudiant</p>
+			<h2 id="registration-title">Enregistrer un visage</h2>
+		</div>
+		<span id="registration-status" class="camera-status">1 à 3 captures</span>
+	</div>
+	<form id="registration-form" class="registration-form">
+		<label>Nom complet<input name="full_name" required maxlength="150"></label>
+		<label>Promotion<input name="promotion" required maxlength="80"></label>
+		<label>Laboratoire<input name="laboratory" required maxlength="80"></label>
+		<label>Machine<input name="machine" required maxlength="80"></label>
+		<label>Téléphone<input name="phone" maxlength="40"></label>
+		<div class="registration-camera">
+			<video id="registration-video" autoplay muted playsinline></video>
+			<canvas id="registration-canvas" hidden></canvas>
+		</div>
+		<label class="camera-choice">Caméra
+			<select id="registration-camera"></select>
+		</label>
+		<label class="image-upload">Ou choisir 1 à 3 photos nettes du visage
+			<input id="registration-files" type="file" accept="image/*" multiple>
+		</label>
+		<div class="camera-controls">
+			<button id="registration-capture" type="button" disabled>Capturer 0/3</button>
+			<button id="registration-submit" type="submit" disabled>Enregistrer l’étudiant</button>
+		</div>
+	</form>
+</section>
+
 <section class="journal">
 	<table>
 		<thead><tr><th>N°</th><th>Identité</th><th>Promotion</th><th>Labo</th><th>Machine</th><th>Téléphone</th></tr></thead>

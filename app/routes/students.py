@@ -1,11 +1,18 @@
 """Student CRUD endpoints."""
 
+import base64
+import binascii
+
+import cv2
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.schemas import StudentCreate, StudentRead
+from app.schemas import StudentCreate, StudentRead, StudentRegistration
+from app.routes.attendance import get_detector
 from src.database.connection import get_db
 from src.database.repository import create_student, delete_student, get_student, list_students
+from src.face.registration import RegistrationError, StudentProfile, register_student_from_frames
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -15,6 +22,58 @@ def list_registered_students(db: Session = Depends(get_db)) -> list[object]:
     """List students without returning stored face embeddings."""
 
     return list_students(db)
+
+
+@router.post("/register", response_model=StudentRead, status_code=status.HTTP_201_CREATED)
+def register_student_from_camera(
+    payload: StudentRegistration, db: Session = Depends(get_db)
+) -> object:
+    """Register one student from several browser camera captures."""
+
+    frames = []
+    for encoded_frame in payload.frames:
+        encoded_image = encoded_frame.split(",", 1)[-1]
+        try:
+            image_bytes = base64.b64decode(encoded_image, validate=True)
+        except (ValueError, binascii.Error) as error:
+            raise HTTPException(status_code=400, detail="Invalid camera image.") from error
+        frame = cv2.imdecode(
+            np.frombuffer(image_bytes, dtype=np.uint8), cv2.IMREAD_COLOR
+        )
+        if frame is None:
+            raise HTTPException(status_code=400, detail="Unsupported camera image.")
+        frames.append(frame)
+
+    profile = StudentProfile(
+        full_name=payload.full_name,
+        promotion=payload.promotion,
+        laboratory=payload.laboratory,
+        machine=payload.machine,
+        phone=payload.phone,
+    )
+    detector = get_detector()
+    valid_frames = [frame for frame in frames if len(detector.detect(frame)) == 1]
+    if not valid_frames:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Aucun visage unique détecté. Utilisez des photos nettes, "
+                "avec un seul visage bien éclairé."
+            ),
+        )
+
+    try:
+        return register_student_from_frames(
+            db, profile, detector, valid_frames, minimum_captures=1
+        )
+    except RegistrationError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Inscription refusée: chaque photo doit contenir exactement "
+                f"un visage. {error}"
+            ),
+        ) from error
 
 
 @router.post("", response_model=StudentRead, status_code=status.HTTP_201_CREATED)

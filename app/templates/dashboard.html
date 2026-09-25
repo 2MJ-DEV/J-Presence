@@ -5,6 +5,28 @@
   <p class="eyebrow">Laboratoire informatique</p>
   <h1>Journal numérique des entrées et sorties</h1>
   <p>Présences du jour</p>
+  <a class="primary-link" href="/students">Ajouter un étudiant avec son visage</a>
+</section>
+
+<section class="camera-panel" aria-labelledby="camera-title">
+  <div class="camera-heading">
+    <div>
+      <p class="eyebrow">Reconnaissance</p>
+      <h2 id="camera-title">Caméra d’entrée</h2>
+    </div>
+    <span id="camera-status" class="camera-status">Arrêtée</span>
+  </div>
+  <div class="camera-view">
+    <video id="camera-video" autoplay muted playsinline></video>
+    <canvas id="camera-overlay"></canvas>
+  </div>
+  <label class="camera-choice">Caméra
+    <select id="camera-device"></select>
+  </label>
+  <div class="camera-controls">
+    <button id="camera-start" type="button">Démarrer la détection</button>
+    <button id="camera-stop" type="button" disabled>Arrêter</button>
+  </div>
 </section>
 
 <section class="journal">
