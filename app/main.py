@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import inspect, text
 
 from app.routes.attendance import router as attendance_router
 from app.routes.dashboard import router as dashboard_router
@@ -21,6 +22,13 @@ def create_tables() -> None:
     """Create the local SQLite schema when the application starts."""
 
     models.Base.metadata.create_all(bind=engine)
+    if engine.dialect.name == "sqlite":
+        columns = {column["name"] for column in inspect(engine).get_columns("unknown_detections")}
+        if "image_data" not in columns:
+            with engine.begin() as connection:
+                connection.execute(
+                    text("ALTER TABLE unknown_detections ADD COLUMN image_data BLOB")
+                )
 
 
 @app.get("/health")

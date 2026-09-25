@@ -5,6 +5,18 @@ const stopButton = document.querySelector("#camera-stop");
 const status = document.querySelector("#camera-status");
 const cameraDevice = document.querySelector("#camera-device");
 
+document.querySelectorAll("[data-fullscreen-target]").forEach((button) => {
+	button.addEventListener("click", async () => {
+		const target = document.getElementById(button.dataset.fullscreenTarget);
+		if (!target) return;
+		if (document.fullscreenElement) {
+			await document.exitFullscreen();
+		} else {
+			await target.requestFullscreen();
+		}
+	});
+});
+
 if (video && overlay && startButton && stopButton && status) {
 	const context = overlay.getContext("2d");
 	const capture = document.createElement("canvas");

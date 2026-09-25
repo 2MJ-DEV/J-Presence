@@ -205,6 +205,7 @@ API principale :
 - `GET/DELETE /students/{id}`
 - `GET /attendance`
 - `GET /attendance/today`
+- `GET /attendance/unknown` (dernières détections de visages inconnus)
 - `POST /attendance/detect` (image caméra encodée en base64)
 - `POST /attendance/check-in`
 - `POST /attendance/check-out`

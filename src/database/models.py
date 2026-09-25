@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     JSON,
+    LargeBinary,
     String,
     Time,
     UniqueConstraint,
@@ -84,3 +85,4 @@ class UnknownDetection(Base):
     )
     confidence: Mapped[float] = mapped_column(Float, nullable=False)
     bbox: Mapped[list[int]] = mapped_column(JSON, nullable=False)
+    image_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)

@@ -8,13 +8,15 @@ from functools import lru_cache
 import cv2
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.schemas import AttendanceAction, AttendanceRead, DetectionFrame
 from src.attendance.service import AttendanceService
 from src.config.settings import get_settings
 from src.database.connection import get_db
-from src.database.repository import list_attendance, list_students
+from src.database.models import UnknownDetection
+from src.database.repository import list_attendance, list_students, list_unknown_detections
 from src.face.detector import InsightFaceDetector
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
@@ -61,6 +63,36 @@ def get_today_attendance(db: Session = Depends(get_db)) -> list[dict[str, object
     """Return today's journal."""
 
     return get_attendance(date.today(), db)
+
+
+@router.get("/unknown")
+def get_unknown_detections(db: Session = Depends(get_db)) -> list[dict[str, object]]:
+    """Return the latest unknown face detections."""
+
+    return [
+        {
+            "id": detection.id,
+            "detected_at": detection.detected_at,
+            "confidence": detection.confidence,
+            "bbox": detection.bbox,
+            "image_url": f"/attendance/unknown/{detection.id}/image"
+            if detection.image_data
+            else None,
+        }
+        for detection in list_unknown_detections(db)
+    ]
+
+
+@router.get("/unknown/{detection_id}/image")
+def get_unknown_detection_image(
+    detection_id: int, db: Session = Depends(get_db)
+) -> Response:
+    """Return the cropped face image for one unknown detection."""
+
+    detection = db.get(UnknownDetection, detection_id)
+    if detection is None or detection.image_data is None:
+        raise HTTPException(status_code=404, detail="Unknown face image not found.")
+    return Response(content=detection.image_data, media_type="image/jpeg")
 
 
 @router.post("/detect")

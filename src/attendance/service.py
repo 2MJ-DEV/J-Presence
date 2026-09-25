@@ -5,6 +5,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Literal
 
 import numpy as np
+import cv2
 from sqlalchemy.orm import Session
 
 from src.attendance.session import DetectionCooldown
@@ -133,6 +134,7 @@ class AttendanceService:
 		self,
 		bbox: tuple[int, int, int, int],
 		confidence: float,
+		image_data: bytes | None = None,
 		occurred_at: datetime | None = None,
 	) -> UnknownDetection | None:
 		"""Persist an unknown face once per cooldown window."""
@@ -144,6 +146,7 @@ class AttendanceService:
 			detected_at=event_time,
 			confidence=confidence,
 			bbox=list(bbox),
+			image_data=image_data,
 		)
 		try:
 			self.db.add(detection)
@@ -202,7 +205,17 @@ class AttendanceService:
 				else None
 			)
 			if not recognition.is_known:
-				self.record_unknown_detection(bbox, confidence, occurred_at)
+				x1, y1, x2, y2 = bbox
+				height, width = frame.shape[:2]
+				x1, x2 = max(0, x1), min(width, x2)
+				y1, y2 = max(0, y1), min(height, y2)
+				face_crop = frame[y1:y2, x1:x2]
+				image_data = None
+				if face_crop.size:
+					encoded, image = cv2.imencode(".jpg", face_crop)
+					if encoded:
+						image_data = image.tobytes()
+				self.record_unknown_detection(bbox, confidence, image_data, occurred_at)
 			results.append(FrameRecognition(bbox, recognition, attendance))
 		return results
 
