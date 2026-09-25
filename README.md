@@ -22,6 +22,7 @@ Important : la camera ne doit pas deviner la promotion, le laboratoire, le telep
 - Script de creation des tables.
 - API FastAPI CRUD pour les étudiants et les présences.
 - Interface Jinja2 alimentée par le journal SQLite.
+- Détection faciale depuis la caméra du navigateur sur le tableau de bord.
 - Tests automatisés du cœur de reconnaissance et de présence.
 
 ## 3. Architecture
@@ -202,6 +203,7 @@ API principale :
 - `GET/DELETE /students/{id}`
 - `GET /attendance`
 - `GET /attendance/today`
+- `POST /attendance/detect` (image caméra encodée en base64)
 - `POST /attendance/check-in`
 - `POST /attendance/check-out`
 

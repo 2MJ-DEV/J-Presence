@@ -64,3 +64,20 @@ class AttendanceAction(BaseModel):
     """Payload for a manual attendance action."""
 
     student_id: int = Field(gt=0)
+
+
+class DetectionFrame(BaseModel):
+    """One browser camera frame sent to the recognition endpoint."""
+
+    image: str = Field(min_length=32)
+
+
+class StudentRegistration(BaseModel):
+    """Student profile and webcam captures used for face registration."""
+
+    full_name: str = Field(min_length=1, max_length=150)
+    promotion: str = Field(min_length=1, max_length=80)
+    laboratory: str = Field(min_length=1, max_length=80)
+    machine: str = Field(min_length=1, max_length=80)
+    phone: str | None = Field(default=None, max_length=40)
+    frames: list[str] = Field(min_length=3, max_length=5)

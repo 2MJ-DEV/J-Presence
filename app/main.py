@@ -11,9 +11,9 @@ from src.database.connection import engine
 
 app = FastAPI(title="Lab Attendance AI")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(dashboard_router)
 app.include_router(students_router)
 app.include_router(attendance_router)
-app.include_router(dashboard_router)
 
 
 @app.on_event("startup")
