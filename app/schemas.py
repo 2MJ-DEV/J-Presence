@@ -80,4 +80,4 @@ class StudentRegistration(BaseModel):
     laboratory: str = Field(min_length=1, max_length=80)
     machine: str = Field(min_length=1, max_length=80)
     phone: str | None = Field(default=None, max_length=40)
-    frames: list[str] = Field(min_length=3, max_length=5)
+    frames: list[str] = Field(min_length=1, max_length=5)

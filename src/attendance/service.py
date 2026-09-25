@@ -8,7 +8,7 @@ import numpy as np
 from sqlalchemy.orm import Session
 
 from src.attendance.session import DetectionCooldown
-from src.database.models import Attendance, Student
+from src.database.models import Attendance, Student, UnknownDetection
 from src.database.repository import get_attendance_for_day, get_student
 from src.face.recognition import RecognitionResult, recognize_embedding
 
@@ -129,6 +129,31 @@ class AttendanceService:
 		if get_student(self.db, student_id) is None:
 			raise ValueError(f"Unknown student id: {student_id}")
 
+	def record_unknown_detection(
+		self,
+		bbox: tuple[int, int, int, int],
+		confidence: float,
+		occurred_at: datetime | None = None,
+	) -> UnknownDetection | None:
+		"""Persist an unknown face once per cooldown window."""
+
+		event_time = occurred_at or datetime.now()
+		if not self.cooldown.should_accept(0, event_time):
+			return None
+		detection = UnknownDetection(
+			detected_at=event_time,
+			confidence=confidence,
+			bbox=list(bbox),
+		)
+		try:
+			self.db.add(detection)
+			self.db.commit()
+			self.db.refresh(detection)
+		except Exception:
+			self.db.rollback()
+			raise
+		return detection
+
 	def _commit_attendance(
 		self,
 		attendance: Attendance,
@@ -163,6 +188,7 @@ class AttendanceService:
 		results: list[FrameRecognition] = []
 		for detection in detector.detect(frame):
 			bbox = tuple(getattr(detection, "bbox", (0, 0, 0, 0)))
+			confidence = float(getattr(detection, "confidence", -1.0))
 			embedding = getattr(detection, "embedding", None)
 			if embedding is None:
 				recognition = RecognitionResult(None, -1.0, False)
@@ -175,6 +201,8 @@ class AttendanceService:
 				if recognition.is_known and recognition.student_id is not None
 				else None
 			)
+			if not recognition.is_known:
+				self.record_unknown_detection(bbox, confidence, occurred_at)
 			results.append(FrameRecognition(bbox, recognition, attendance))
 		return results
 

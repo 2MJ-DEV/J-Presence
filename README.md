@@ -25,6 +25,8 @@ Important : la camera ne doit pas deviner la promotion, le laboratoire, le telep
 - Détection faciale depuis la caméra du navigateur sur le tableau de bord.
 - Tests automatisés du cœur de reconnaissance et de présence.
 
+Le fonctionnement détaillé des seuils, des embeddings, de la base et de la présence est documenté dans [docs/FACE_RECOGNITION.md](docs/FACE_RECOGNITION.md).
+
 ## 3. Architecture
 
 ```text

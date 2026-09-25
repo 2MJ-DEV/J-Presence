@@ -51,12 +51,29 @@ def register_student_from_camera(
         machine=payload.machine,
         phone=payload.phone,
     )
+    detector = get_detector()
+    valid_frames = [frame for frame in frames if len(detector.detect(frame)) == 1]
+    if not valid_frames:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Aucun visage unique détecté. Utilisez des photos nettes, "
+                "avec un seul visage bien éclairé."
+            ),
+        )
+
     try:
         return register_student_from_frames(
-            db, profile, get_detector(), frames, minimum_captures=len(frames)
+            db, profile, detector, valid_frames, minimum_captures=1
         )
     except RegistrationError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Inscription refusée: chaque photo doit contenir exactement "
+                f"un visage. {error}"
+            ),
+        ) from error
 
 
 @router.post("", response_model=StudentRead, status_code=status.HTTP_201_CREATED)

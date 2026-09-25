@@ -5,7 +5,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.database.models import Attendance, Student
+from src.database.models import Attendance, Student, UnknownDetection
 
 
 def list_students(db: Session) -> list[Student]:
@@ -69,3 +69,17 @@ def list_attendance(
     if attendance_date is not None:
         query = query.where(Attendance.date == attendance_date)
     return list(db.scalars(query).all())
+
+
+def list_unknown_detections(
+    db: Session, limit: int = 100
+) -> list[UnknownDetection]:
+    """Return the latest unknown face detections."""
+
+    return list(
+        db.scalars(
+            select(UnknownDetection)
+            .order_by(UnknownDetection.detected_at.desc(), UnknownDetection.id.desc())
+            .limit(limit)
+        ).all()
+    )

@@ -12,7 +12,7 @@
 			<p class="eyebrow">Nouvel étudiant</p>
 			<h2 id="registration-title">Enregistrer un visage</h2>
 		</div>
-		<span id="registration-status" class="camera-status">3 captures requises</span>
+		<span id="registration-status" class="camera-status">1 à 3 captures</span>
 	</div>
 	<form id="registration-form" class="registration-form">
 		<label>Nom complet<input name="full_name" required maxlength="150"></label>
@@ -24,7 +24,10 @@
 			<video id="registration-video" autoplay muted playsinline></video>
 			<canvas id="registration-canvas" hidden></canvas>
 		</div>
-		<label class="image-upload">Ou choisir 3 photos nettes du visage
+		<label class="camera-choice">Caméra
+			<select id="registration-camera"></select>
+		</label>
+		<label class="image-upload">Ou choisir 1 à 3 photos nettes du visage
 			<input id="registration-files" type="file" accept="image/*" multiple>
 		</label>
 		<div class="camera-controls">

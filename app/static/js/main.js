@@ -3,6 +3,7 @@ const overlay = document.querySelector("#camera-overlay");
 const startButton = document.querySelector("#camera-start");
 const stopButton = document.querySelector("#camera-stop");
 const status = document.querySelector("#camera-status");
+const cameraDevice = document.querySelector("#camera-device");
 
 if (video && overlay && startButton && stopButton && status) {
 	const context = overlay.getContext("2d");
@@ -26,6 +27,18 @@ if (video && overlay && startButton && stopButton && status) {
 		startButton.disabled = false;
 		stopButton.disabled = true;
 		setStatus("Arrêtée");
+	}
+
+	async function loadCameraDevices(select) {
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		const cameras = devices.filter((device) => device.kind === "videoinput");
+		select.innerHTML = "";
+		cameras.forEach((camera, index) => {
+			const option = document.createElement("option");
+			option.value = camera.deviceId;
+			option.textContent = camera.label || `Caméra ${index + 1}`;
+			select.appendChild(option);
+		});
 	}
 
 	function drawDetections(detections) {
@@ -73,6 +86,13 @@ if (video && overlay && startButton && stopButton && status) {
 			const result = await response.json();
 			if (!response.ok) throw new Error(result.detail || "Erreur de détection");
 			drawDetections(result.detections);
+				const attendanceChanged = result.detections.some((detection) =>
+					["check_in", "check_out"].includes(detection.action),
+				);
+				if (attendanceChanged) {
+					setStatus("Présence enregistrée", "active");
+					window.setTimeout(() => window.location.reload(), 900);
+				}
 		} catch (error) {
 			setStatus(error.message, "error");
 		} finally {
@@ -88,7 +108,9 @@ if (video && overlay && startButton && stopButton && status) {
 		try {
 			setStatus("Ouverture de la caméra...");
 			stream = await navigator.mediaDevices.getUserMedia({
-				video: { width: { ideal: 640 }, height: { ideal: 480 } },
+				video: cameraDevice?.value
+					? { deviceId: { exact: cameraDevice.value }, width: { ideal: 640 }, height: { ideal: 480 } }
+					: { facingMode: { ideal: "user" }, width: { ideal: 640 }, height: { ideal: 480 } },
 				audio: false,
 			});
 			video.srcObject = stream;
@@ -104,6 +126,19 @@ if (video && overlay && startButton && stopButton && status) {
 	}
 
 	startButton.addEventListener("click", startCamera);
+	cameraDevice?.addEventListener("change", async () => {
+		stopCamera();
+		await startCamera();
+	});
+	navigator.mediaDevices?.addEventListener("devicechange", () => loadCameraDevices(cameraDevice));
+	if (cameraDevice && navigator.mediaDevices?.enumerateDevices) {
+		navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+			.then((initialStream) => {
+				initialStream.getTracks().forEach((track) => track.stop());
+				return loadCameraDevices(cameraDevice);
+			})
+			.catch(() => setStatus("Autorisez une caméra pour continuer", "error"));
+	}
 	window.setTimeout(startCamera, 250);
 
 	stopButton.addEventListener("click", stopCamera);
@@ -116,6 +151,7 @@ const registrationCapture = document.querySelector("#registration-capture");
 const registrationSubmit = document.querySelector("#registration-submit");
 const registrationStatus = document.querySelector("#registration-status");
 const registrationFiles = document.querySelector("#registration-files");
+const registrationCamera = document.querySelector("#registration-camera");
 
 if (
 	registrationVideo && registrationCanvas && registrationForm &&
@@ -136,7 +172,9 @@ if (
 		}
 		try {
 			registrationStream = await navigator.mediaDevices.getUserMedia({
-				video: { width: { ideal: 640 }, height: { ideal: 480 } },
+				video: registrationCamera?.value
+					? { deviceId: { exact: registrationCamera.value }, width: { ideal: 640 }, height: { ideal: 480 } }
+					: { facingMode: { ideal: "user" }, width: { ideal: 640 }, height: { ideal: 480 } },
 				audio: false,
 			});
 			registrationVideo.srcObject = registrationStream;
@@ -148,28 +186,59 @@ if (
 		}
 	}
 
+	async function loadRegistrationCameras() {
+		if (!registrationCamera) return;
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		registrationCamera.innerHTML = "";
+		devices.filter((device) => device.kind === "videoinput").forEach((camera, index) => {
+			const option = document.createElement("option");
+			option.value = camera.deviceId;
+			option.textContent = camera.label || `Caméra ${index + 1}`;
+			registrationCamera.appendChild(option);
+		});
+	}
+
+	registrationCamera?.addEventListener("change", async () => {
+		registrationStream?.getTracks().forEach((track) => track.stop());
+		await openRegistrationCamera();
+	});
+
 	registrationCapture.addEventListener("click", () => {
 		if (captures.length >= 3 || registrationVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
 		registrationCanvas.width = registrationVideo.videoWidth;
 		registrationCanvas.height = registrationVideo.videoHeight;
-		registrationCanvas.getContext("2d").drawImage(
+		const registrationContext = registrationCanvas.getContext("2d");
+		registrationContext.drawImage(
 			registrationVideo, 0, 0, registrationCanvas.width, registrationCanvas.height,
 		);
+		const sample = registrationContext.getImageData(
+			Math.floor(registrationCanvas.width / 2),
+			Math.floor(registrationCanvas.height / 2),
+			1,
+			1,
+		).data;
+		if (sample[1] > 90 && sample[1] > sample[0] * 1.8 && sample[1] > sample[2] * 1.8) {
+			setRegistrationStatus(
+				"Capture verte: changez de caméra ou utilisez 3 photos",
+				"error",
+			);
+			return;
+		}
 		captures.push(registrationCanvas.toDataURL("image/jpeg", 0.9));
 		registrationCapture.textContent = `Capturer ${captures.length}/3`;
+		registrationSubmit.disabled = false;
 		if (captures.length === 3) {
 			registrationCapture.disabled = true;
-			registrationSubmit.disabled = false;
 			setRegistrationStatus("Captures prêtes", "active");
 		} else {
-			setRegistrationStatus(`Capture ${captures.length}/3 enregistrée`);
+			setRegistrationStatus(`Capture ${captures.length}/3 enregistrée, vous pouvez enregistrer`);
 		}
 	});
 
 	registrationFiles?.addEventListener("change", async () => {
 		const selectedFiles = Array.from(registrationFiles.files || []).slice(0, 3);
-		if (selectedFiles.length < 3) {
-			setRegistrationStatus("Sélectionnez au moins 3 photos", "error");
+		if (selectedFiles.length < 1) {
+			setRegistrationStatus("Sélectionnez au moins une photo", "error");
 			return;
 		}
 		if (registrationStream) registrationStream.getTracks().forEach((track) => track.stop());
@@ -183,8 +252,8 @@ if (
 					reader.readAsDataURL(file);
 				}));
 			}
-			registrationCapture.textContent = "Photos prêtes (3/3)";
-			registrationCapture.disabled = true;
+			registrationCapture.textContent = `Photos prêtes (${captures.length}/3)`;
+			registrationCapture.disabled = captures.length >= 3;
 			registrationSubmit.disabled = false;
 			setRegistrationStatus("Photos prêtes, visage unique par photo", "active");
 		} catch (error) {
@@ -220,5 +289,13 @@ if (
 		}
 	});
 
-	openRegistrationCamera();
+	if (navigator.mediaDevices?.getUserMedia) {
+		navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+			.then((initialStream) => {
+				initialStream.getTracks().forEach((track) => track.stop());
+				return loadRegistrationCameras();
+			})
+			.then(openRegistrationCamera)
+			.catch(() => setRegistrationStatus("Autorisez une caméra ou choisissez des photos", "error"));
+	}
 }

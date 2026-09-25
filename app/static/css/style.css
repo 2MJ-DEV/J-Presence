@@ -106,6 +106,23 @@ h1 {
   aspect-ratio: 4 / 3;
 }
 
+.camera-choice {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 6px;
+  max-width: 480px;
+  color: #243b3b;
+  font-weight: 700;
+}
+
+.camera-choice select {
+  padding: 9px;
+  border: 1px solid #bfcdd2;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+}
+
 #registration-video {
   width: 100%;
   height: 100%;
