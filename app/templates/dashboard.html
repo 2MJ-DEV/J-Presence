@@ -29,6 +29,32 @@
   </div>
 </section>
 
+<section class="journal unknown-journal">
+  <div class="camera-heading">
+    <div>
+      <p class="eyebrow">Surveillance</p>
+      <h2>Visages inconnus enregistrés</h2>
+    </div>
+    <span class="camera-status">{{ unknown_detections|length }}</span>
+  </div>
+  <table>
+    <thead><tr><th>N°</th><th>Date</th><th>Heure</th><th>Confiance</th><th>Zone</th></tr></thead>
+    <tbody>
+      {% for detection in unknown_detections %}
+      <tr>
+        <td>{{ detection.id }}</td>
+        <td>{{ detection.detected_at.strftime('%d/%m/%Y') }}</td>
+        <td>{{ detection.detected_at.strftime('%H:%M:%S') }}</td>
+        <td>{{ '%.2f'|format(detection.confidence) }}</td>
+        <td>{{ detection.bbox }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">Aucun visage inconnu enregistré.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
 <section class="journal">
   <table>
     <thead>

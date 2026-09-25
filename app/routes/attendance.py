@@ -14,7 +14,7 @@ from app.schemas import AttendanceAction, AttendanceRead, DetectionFrame
 from src.attendance.service import AttendanceService
 from src.config.settings import get_settings
 from src.database.connection import get_db
-from src.database.repository import list_attendance, list_students
+from src.database.repository import list_attendance, list_students, list_unknown_detections
 from src.face.detector import InsightFaceDetector
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
@@ -61,6 +61,21 @@ def get_today_attendance(db: Session = Depends(get_db)) -> list[dict[str, object
     """Return today's journal."""
 
     return get_attendance(date.today(), db)
+
+
+@router.get("/unknown")
+def get_unknown_detections(db: Session = Depends(get_db)) -> list[dict[str, object]]:
+    """Return the latest unknown face detections."""
+
+    return [
+        {
+            "id": detection.id,
+            "detected_at": detection.detected_at,
+            "confidence": detection.confidence,
+            "bbox": detection.bbox,
+        }
+        for detection in list_unknown_detections(db)
+    ]
 
 
 @router.post("/detect")

@@ -122,6 +122,12 @@ A chaque image envoyee par `/attendance/detect` :
 
 Un visage detecte mais inconnu est affiche comme inconnu et ne cree aucune presence.
 
+Depuis l'ajout du journal des inconnus, il est aussi sauvegarde dans la table
+`unknown_detections` avec son heure, son score et sa zone (`bbox`). Cette ligne
+ne contient pas de nom et ne cree pas de presence etudiante. Les derniers
+enregistrements sont accessibles par `GET /attendance/unknown` et sont visibles
+sur le tableau de bord.
+
 ## 5. Regles de presence
 
 `AttendanceService.record_detection` applique les regles suivantes pour la date du jour :

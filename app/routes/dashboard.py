@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.routes.attendance import serialize_attendance
 from src.database.connection import get_db
-from src.database.repository import list_attendance, list_students
+from src.database.repository import list_attendance, list_students, list_unknown_detections
 
 router = APIRouter(tags=["dashboard"])
 templates = Jinja2Templates(directory="app/templates")
@@ -23,7 +23,12 @@ def dashboard(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
     return templates.TemplateResponse(
         request,
         "dashboard.html",
-        {"request": request, "title": "Journal du laboratoire", "rows": rows},
+        {
+            "request": request,
+            "title": "Journal du laboratoire",
+            "rows": rows,
+            "unknown_detections": list_unknown_detections(db, limit=20),
+        },
     )
 
 
